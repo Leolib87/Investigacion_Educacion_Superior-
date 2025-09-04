@@ -1,0 +1,426 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Carreras del Futuro: Chile y el Mundo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;700&display=swap" rel="stylesheet">
+    <!-- Chosen Palette: Warm Neutrals -->
+    <!-- Application Structure Plan: Se ha diseñado una SPA con una estructura temática y un flujo interactivo para maximizar la usabilidad. En lugar de un informe lineal, el usuario navega a través de cuatro áreas clave (Tecnología, Sostenibilidad, Salud, Negocios Digitales) mediante tarjetas interactivas. Esta estructura de "dashboard" permite al usuario dirigir su propia exploración. Al seleccionar un área, se presenta una vista de detalle maestro (lista de carreras -> detalle de carrera), lo que facilita la comparación y el análisis profundo. Un interruptor "Chile/Global" permite contextualizar la información, alterando dinámicamente todos los datos y gráficos. Esta arquitectura fue elegida porque transforma la lectura pasiva en una exploración activa, permitiendo a los usuarios comparar y conectar conceptos de forma intuitiva y visual. -->
+    <!-- Visualization & Content Choices: 1. Áreas temáticas -> Tarjetas interactivas -> Informar/Organizar -> HTML/CSS con JS para la selección. Justificación: Proporciona un punto de partida visual y claro. 2. Lista de carreras -> Lista interactiva -> Organizar/Navegar -> HTML/JS. Justificación: Interfaz de detalle maestro clásica y eficiente. 3. Detalle de carrera -> Bloque de texto dinámico -> Informar -> HTML/JS. Justificación: Reutiliza el espacio de forma eficiente. 4. Demanda por sector -> Gráfico de barras -> Comparar -> Chart.js (Canvas). Justificación: Ideal para comparar la magnitud de la demanda entre sectores. Es interactivo con el filtro Chile/Global. 5. Habilidades transversales -> Gráfico de radar -> Comparar/Relacionar -> Chart.js (Canvas). Justificación: Muestra de forma efectiva la importancia multidimensional de las habilidades blandas. -->
+    <!-- CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #1a202c;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 40vh;
+            max-height: 450px;
+        }
+        .nav-button.active {
+            background-color: #2563eb;
+            color: white;
+            transform: translateY(-2px);
+            box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+        }
+        .career-item.active {
+            background-color: #eff6ff;
+            border-left-color: #2563eb;
+        }
+        .toggle-bg:after {
+            content: '';
+            position: absolute;
+            top: 2px;
+            left: 2px;
+            background: white;
+            border-radius: 9999px;
+            height: 1.25rem;
+            width: 1.25rem;
+            transition: 0.3s;
+        }
+        input:checked + .toggle-bg:after {
+            transform: translateX(100%);
+        }
+        input:checked + .toggle-bg {
+            background-color: #2563eb;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <div class="container mx-auto px-4 sm:px-6 lg:px-8 py-10">
+
+        <header class="text-center mb-12">
+            <h1 class="text-4xl md:text-5xl font-bold text-gray-800 mb-2">Carreras del Futuro</h1>
+            <p class="text-lg text-gray-600 max-w-3xl mx-auto">Navega por las profesiones con mayor demanda en Chile y el mundo, moldeadas por la tecnología y las nuevas realidades sociales.</p>
+        </header>
+
+        <div class="flex justify-center items-center space-x-4 mb-10">
+            <span class="font-medium text-gray-700">Enfoque Chile</span>
+            <label for="scope-toggle" class="flex items-center cursor-pointer">
+                <div class="relative">
+                    <input type="checkbox" id="scope-toggle" class="sr-only">
+                    <div class="block bg-gray-300 w-10 h-6 rounded-full toggle-bg"></div>
+                </div>
+            </label>
+            <span class="font-medium text-gray-700">Visión Global</span>
+        </div>
+
+        <nav id="area-navigation" class="grid grid-cols-2 md:grid-cols-4 gap-4 mb-12">
+        </nav>
+        
+        <main id="content-section" class="bg-white rounded-2xl shadow-lg p-6 md:p-8 min-h-[500px] hidden">
+            <div class="grid grid-cols-1 md:grid-cols-3 lg:grid-cols-4 gap-8">
+                <div class="md:col-span-1 lg:col-span-1 border-r-0 md:border-r md:pr-6 border-gray-200">
+                     <h3 id="area-title" class="text-xl font-bold mb-4 text-gray-800"></h3>
+                    <ul id="career-list" class="space-y-2">
+                    </ul>
+                </div>
+                <div id="career-details" class="md:col-span-2 lg:col-span-3">
+                </div>
+            </div>
+        </main>
+
+        <section class="mt-16">
+            <h2 class="text-3xl font-bold text-center mb-10 text-gray-800">Análisis y Proyecciones</h2>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-12">
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-center mb-4">Demanda Proyectada por Sector</h3>
+                    <p class="text-center text-sm text-gray-500 mb-4">Estimación del crecimiento en la demanda de profesionales para los próximos 5 años.</p>
+                    <div class="chart-container mx-auto max-w-2xl">
+                        <canvas id="demandChart"></canvas>
+                    </div>
+                </div>
+                <div class="bg-white rounded-2xl shadow-lg p-6">
+                    <h3 class="text-xl font-bold text-center mb-4">Habilidades Transversales Clave</h3>
+                     <p class="text-center text-sm text-gray-500 mb-4">Competencias esenciales para el éxito en cualquier carrera del futuro.</p>
+                    <div class="chart-container mx-auto max-w-lg">
+                        <canvas id="skillsChart"></canvas>
+                    </div>
+                </div>
+            </div>
+        </section>
+    </div>
+
+    <script>
+        const careerData = {
+            chile: {
+                tecnologia: {
+                    title: "Tecnología y IA",
+                    icon: "💻",
+                    careers: [
+                        { name: "Desarrollador de Software", desc: "Creación y mantenimiento de aplicaciones y sistemas. Alta demanda en e-commerce, fintech y servicios. La IA generativa está transformando las herramientas de desarrollo.", salary: "Alta", demand: 95 },
+                        { name: "Especialista en Ciberseguridad", desc: "Protección de datos e infraestructura digital. Crítico para todos los sectores, especialmente financiero y gobierno, ante el aumento de ciberataques.", salary: "Muy Alta", demand: 92 },
+                        { name: "Analista de Datos", desc: "Interpretación de datos para la toma de decisiones. Fundamental en retail, minería y agricultura para optimizar procesos y predecir tendencias.", salary: "Alta", demand: 88 },
+                        { name: "Ingeniero en Cloud Computing", desc: "Gestión de servicios en la nube (AWS, Azure, GCP). Base para la transformación digital de la mayoría de las empresas en el país.", salary: "Alta", demand: 85 },
+                    ]
+                },
+                sostenibilidad: {
+                    title: "Sostenibilidad y Energía",
+                    icon: "🌱",
+                    careers: [
+                        { name: "Ingeniero en Energías Renovables", desc: "Desarrollo de proyectos solares, eólicos e hidrógeno verde. Chile es un líder mundial, con fuerte inversión y potencial de crecimiento.", salary: "Alta", demand: 90 },
+                        { name: "Especialista en Sostenibilidad (ESG)", desc: "Asesoría a empresas en criterios ambientales, sociales y de gobernanza. Requerido por regulaciones y demanda de inversionistas.", salary: "Media-Alta", demand: 80 },
+                        { name: "Experto en Gestión de Recursos Hídricos", desc: "Optimización del uso del agua en minería, agricultura e industria, enfrentando la escasez hídrica con tecnología y nuevas estrategias.", salary: "Alta", demand: 78 },
+                        { name: "Consultor en Economía Circular", desc: "Diseño de modelos de negocio que minimizan el desperdicio. Creciente interés en industrias de consumo masivo y construcción.", salary: "Media-Alta", demand: 70 },
+                    ]
+                },
+                salud: {
+                    title: "Salud y Bienestar",
+                    icon: "❤️‍🩹",
+                    careers: [
+                        { name: "Enfermería Especializada", desc: "Profesionales con especialización en geriatría, oncología y cuidados intensivos. Demanda impulsada por el envejecimiento de la población.", salary: "Media-Alta", demand: 85 },
+                        { name: "Especialista en Salud Digital", desc: "Implementación de telemedicina, fichas clínicas electrónicas y análisis de datos de salud para mejorar la gestión y atención al paciente.", salary: "Alta", demand: 82 },
+                        { name: "Psicólogo Organizacional y Clínico", desc: "Apoyo a la salud mental en el trabajo y a nivel individual. Creciente conciencia sobre su importancia post-pandemia.", salary: "Media", demand: 75 },
+                        { name: "Fisioterapeuta y Kinesiólogo", desc: "Rehabilitación y terapia física, con demanda creciente por el envejecimiento y estilos de vida sedentarios.", salary: "Media", demand: 70 },
+                    ]
+                },
+                negocios: {
+                    title: "Negocios y Estrategia Digital",
+                    icon: "🚀",
+                    careers: [
+                        { name: "Gerente de Producto Digital", desc: "Lidera la estrategia y desarrollo de productos tecnológicos, coordinando equipos de diseño, ingeniería y marketing.", salary: "Muy Alta", demand: 88 },
+                        { name: "Especialista en Marketing Digital", desc: "Gestión de campañas online, SEO, SEM y análisis de datos de marketing. Esencial para el crecimiento de cualquier negocio moderno.", salary: "Media-Alta", demand: 86 },
+                        { name: "Diseñador de Experiencia de Usuario (UX/UI)", desc: "Creación de productos digitales fáciles e intuitivos de usar. Clave para la retención de clientes en un mercado competitivo.", salary: "Alta", demand: 84 },
+                        { name: "Gerente de E-commerce y Logística", desc: "Administración de tiendas online y optimización de la cadena de suministro ('última milla'). Sector en constante expansión en Chile.", salary: "Alta", demand: 80 },
+                    ]
+                }
+            },
+            global: {
+                tecnologia: {
+                    title: "Tecnología y IA",
+                    icon: "💻",
+                    careers: [
+                        { name: "Especialista en IA y Machine Learning", desc: "Desarrollo de algoritmos y modelos de IA. Impulsa la innovación en todos los sectores a nivel mundial, desde la salud hasta las finanzas.", salary: "Muy Alta", demand: 98 },
+                        { name: "Ingeniero de Software", desc: "Demanda constante y global para construir el tejido digital de la economía. La especialización en IA y plataformas distribuidas es clave.", salary: "Alta", demand: 94 },
+                        { name: "Científico de Datos", desc: "Análisis de grandes volúmenes de datos para extraer insights estratégicos. Es el 'cerebro' detrás de las decisiones de las grandes tecnológicas.", salary: "Muy Alta", demand: 90 },
+                        { name: "Experto en Ciberseguridad", desc: "Una necesidad universal con la digitalización global. La IA se usa tanto para atacar como para defender sistemas.", salary: "Muy Alta", demand: 91 },
+                    ]
+                },
+                sostenibilidad: {
+                    title: "Sostenibilidad y Energía",
+                    icon: "🌱",
+                    careers: [
+                        { name: "Ingeniero en Energías Renovables", desc: "Transición energética global hacia fuentes limpias. Proyectos a gran escala en todo el mundo.", salary: "Alta", demand: 88 },
+                        { name: "Especialista en Sostenibilidad (ESG)", desc: "Presión de inversionistas y reguladores globales para que las corporaciones sean más sostenibles y transparentes.", salary: "Alta", demand: 85 },
+                        { name: "Científico del Clima", desc: "Modelado y análisis de datos climáticos para gobiernos y corporaciones para mitigar riesgos y adaptarse al cambio climático.", salary: "Alta", demand: 80 },
+                        { name: "Ingeniero en Biotecnología", desc: "Desarrollo de materiales sostenibles, biocombustibles y soluciones agrícolas para reducir el impacto ambiental.", salary: "Muy Alta", demand: 82 },
+                    ]
+                },
+                salud: {
+                    title: "Salud y Bienestar",
+                    icon: "❤️‍🩹",
+                    careers: [
+                        { name: "Especialista en Genómica y Medicina Personalizada", desc: "Uso de datos genéticos para tratamientos a medida. La frontera de la innovación médica.", salary: "Muy Alta", demand: 89 },
+                        { name: "Ingeniero Biomédico", desc: "Diseño de dispositivos médicos, prótesis y equipos de diagnóstico avanzados, integrando IA y robótica.", salary: "Alta", demand: 86 },
+                        { name: "Profesional de Salud Mental", desc: "Demanda global creciente por servicios de psicología y psiquiatría, con nuevas plataformas digitales que amplían el acceso.", salary: "Media-Alta", demand: 80 },
+                        { name: "Experto en Salud Pública Global", desc: "Prevención de pandemias y gestión de crisis sanitarias a nivel internacional. Lecciones aprendidas del COVID-19.", salary: "Alta", demand: 78 },
+                    ]
+                },
+                negocios: {
+                    title: "Negocios y Estrategia Digital",
+                    icon: "🚀",
+                    careers: [
+                        { name: "Gerente de Producto (IA)", desc: "Lidera el desarrollo de productos que tienen la inteligencia artificial en su núcleo, definiendo la estrategia y la ética de su uso.", salary: "Muy Alta", demand: 92 },
+                        { name: "Estratega de Transformación Digital", desc: "Ayuda a las empresas tradicionales a adoptar tecnologías digitales y nuevos modelos de negocio para competir globalmente.", salary: "Muy Alta", demand: 87 },
+                        { name: "Analista de Growth y Marketing Digital", desc: "Uso intensivo de datos y experimentación para acelerar el crecimiento de startups y empresas tecnológicas.", salary: "Alta", demand: 85 },
+                        { name: "Experto en Robótica y Automatización de Procesos (RPA)", desc: "Implementación de robots de software para automatizar tareas repetitivas en finanzas, recursos humanos y operaciones.", salary: "Alta", demand: 83 },
+                    ]
+                }
+            }
+        };
+
+        const skillsData = {
+            labels: [
+                'Pensamiento Crítico', 
+                'Resolución de Problemas Complejos', 
+                'Creatividad e Innovación', 
+                'Liderazgo e Influencia', 
+                'Inteligencia Emocional',
+                'Adaptabilidad', 
+                'Aprendizaje Continuo'
+            ],
+            importance: [9, 9.5, 8.5, 8, 9, 10, 10]
+        };
+
+        let currentState = {
+            scope: 'chile',
+            activeArea: null,
+            activeCareerIndex: null,
+        };
+        
+        let demandChartInstance;
+        let skillsChartInstance;
+
+        document.addEventListener('DOMContentLoaded', () => {
+            renderAreaNavigation();
+            renderDemandChart();
+            renderSkillsChart();
+            setupEventListeners();
+        });
+
+        function setupEventListeners() {
+            document.getElementById('scope-toggle').addEventListener('change', (e) => {
+                currentState.scope = e.target.checked ? 'global' : 'chile';
+                renderAreaNavigation();
+                updateDemandChart();
+                
+                if (currentState.activeArea) {
+                    renderCareerList();
+                    selectCareer(0);
+                }
+            });
+        }
+        
+        function renderAreaNavigation() {
+            const navContainer = document.getElementById('area-navigation');
+            navContainer.innerHTML = '';
+            const data = careerData[currentState.scope];
+            Object.keys(data).forEach(key => {
+                const area = data[key];
+                const button = document.createElement('button');
+                button.className = 'nav-button flex flex-col items-center justify-center text-center p-4 bg-white rounded-xl shadow-md hover:shadow-lg transition-all duration-300';
+                button.dataset.area = key;
+                button.innerHTML = `
+                    <span class="text-4xl mb-2">${area.icon}</span>
+                    <span class="font-semibold text-gray-700">${area.title}</span>
+                `;
+                button.addEventListener('click', () => selectArea(key));
+                navContainer.appendChild(button);
+            });
+        }
+        
+        function selectArea(areaKey) {
+            currentState.activeArea = areaKey;
+            currentState.activeCareerIndex = 0;
+
+            document.querySelectorAll('.nav-button').forEach(btn => btn.classList.remove('active'));
+            document.querySelector(`.nav-button[data-area="${areaKey}"]`).classList.add('active');
+
+            document.getElementById('content-section').classList.remove('hidden');
+            document.getElementById('area-title').textContent = careerData[currentState.scope][areaKey].title;
+            
+            renderCareerList();
+            selectCareer(0);
+        }
+
+        function renderCareerList() {
+            const listContainer = document.getElementById('career-list');
+            listContainer.innerHTML = '';
+            const careers = careerData[currentState.scope][currentState.activeArea].careers;
+            careers.forEach((career, index) => {
+                const li = document.createElement('li');
+                li.className = 'career-item p-3 rounded-md cursor-pointer border-l-4 border-transparent transition-colors duration-200 hover:bg-gray-100';
+                li.textContent = career.name;
+                li.dataset.index = index;
+                li.addEventListener('click', () => selectCareer(index));
+                listContainer.appendChild(li);
+            });
+        }
+
+        function selectCareer(index) {
+            currentState.activeCareerIndex = index;
+
+            document.querySelectorAll('.career-item').forEach(item => item.classList.remove('active'));
+            document.querySelector(`.career-item[data-index="${index}"]`).classList.add('active');
+
+            renderCareerDetails();
+        }
+        
+        function renderCareerDetails() {
+            const detailsContainer = document.getElementById('career-details');
+            const career = careerData[currentState.scope][currentState.activeArea].careers[currentState.activeCareerIndex];
+            
+            detailsContainer.innerHTML = `
+                <h2 class="text-3xl font-bold text-gray-900 mb-3">${career.name}</h2>
+                <p class="text-gray-600 mb-6 text-lg">${career.desc}</p>
+                <div class="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div class="bg-blue-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-blue-800">Nivel de Demanda</h4>
+                        <p class="text-2xl font-semibold text-blue-900">${career.demand}%</p>
+                    </div>
+                    <div class="bg-green-50 p-4 rounded-lg">
+                        <h4 class="font-bold text-green-800">Proyección Salarial</h4>
+                        <p class="text-2xl font-semibold text-green-900">${career.salary}</p>
+                    </div>
+                </div>
+            `;
+        }
+
+        function getDemandData() {
+            const data = careerData[currentState.scope];
+            const labels = Object.values(data).map(area => area.title);
+            const demandValues = Object.values(data).map(area => {
+                const totalDemand = area.careers.reduce((sum, career) => sum + career.demand, 0);
+                return (totalDemand / area.careers.length).toFixed(1);
+            });
+            return { labels, demandValues };
+        }
+        
+        function renderDemandChart() {
+            const ctx = document.getElementById('demandChart').getContext('2d');
+            const { labels, demandValues } = getDemandData();
+            
+            demandChartInstance = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Índice de Demanda Promedio',
+                        data: demandValues,
+                        backgroundColor: '#3b82f6',
+                        borderColor: '#1e40af',
+                        borderWidth: 1,
+                        borderRadius: 5,
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            max: 100,
+                            title: {
+                                display: true,
+                                text: 'Índice de Demanda (0-100)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false,
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Demanda: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateDemandChart() {
+            const { labels, demandValues } = getDemandData();
+            demandChartInstance.data.labels = labels;
+            demandChartInstance.data.datasets[0].data = demandValues;
+            demandChartInstance.update();
+        }
+
+        function renderSkillsChart() {
+            const ctx = document.getElementById('skillsChart').getContext('2d');
+            skillsChartInstance = new Chart(ctx, {
+                type: 'radar',
+                data: {
+                    labels: skillsData.labels,
+                    datasets: [{
+                        label: 'Nivel de Importancia',
+                        data: skillsData.importance,
+                        fill: true,
+                        backgroundColor: 'rgba(59, 130, 246, 0.2)',
+                        borderColor: 'rgb(59, 130, 246)',
+                        pointBackgroundColor: 'rgb(59, 130, 246)',
+                        pointBorderColor: '#fff',
+                        pointHoverBackgroundColor: '#fff',
+                        pointHoverBorderColor: 'rgb(59, 130, 246)'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        r: {
+                            beginAtZero: true,
+                            max: 10,
+                            ticks: {
+                                stepSize: 2
+                            },
+                            pointLabels: {
+                                font: {
+                                    size: 12
+                                }
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                           display: false,
+                        }
+                    }
+                }
+            });
+        }
+
+    </script>
+</body>
+</html>
