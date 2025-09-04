@@ -1,0 +1,435 @@
+<!DOCTYPE html>
+<html lang="es" class="scroll-smooth">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Plan Estratégico Interactivo | Nueva Facultad de Ciencias</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    
+    <!-- Chosen Palette: Warm Neutrals (Beige, Slate, Soft Teal Accent) -->
+    <!-- Application Structure Plan: He diseñado la aplicación como un panel de control interactivo en lugar de un documento lineal. La estructura sigue un flujo lógico de toma de decisiones: 1) Pilares de Investigación (tarjetas interactivas que revelan detalles al hacer clic), 2) Simulador de Estrategia (un gráfico de barras dinámico que permite al usuario ponderar criterios y ver el impacto en la priorización de carreras), 3) Diseño de la Oferta (diagramas visuales que aclaran la estructura del portafolio y las mallas), y 4) Plan de Lanzamiento (una línea de tiempo interactiva). Esta estructura transforma un plan estático en una herramienta de exploración, facilitando la comprensión de las relaciones causa-efecto en la estrategia y haciendo el contenido más digerible y atractivo. -->
+    <!-- Visualization & Content Choices: 
+        - FASE 1 (Tabla de Investigación) -> Objetivo: Organizar/Informar -> Presentación: 4 tarjetas interactivas (HTML/CSS/JS) -> Interacción: Clic para expandir y mostrar detalles (acciones, herramientas, preguntas). -> Justificación: Evita una tabla abrumadora, presentando la información en fragmentos manejables.
+        - FASE 2 (Matriz de Priorización) -> Objetivo: Comparar/Analizar -> Presentación: Gráfico de barras dinámico con controles deslizantes (Chart.js) -> Interacción: El usuario ajusta los pesos de los criterios estratégicos y el gráfico se actualiza en tiempo real, reordenando las carreras. -> Justificación: Convierte un concepto abstracto de "ponderación" en una simulación visual y tangible, demostrando el impacto directo de las decisiones estratégicas.
+        - FASE 3 (Diseño de Oferta) -> Objetivo: Organizar/Informar -> Presentación: Diagramas visuales (HTML/Tailwind CSS) para el portafolio y la estructura curricular. -> Interacción: Efectos de hover para resaltar elementos. -> Justificación: Comunica conceptos estructurales complejos de forma mucho más clara y rápida que el texto.
+        - FASE 4 (Plan de Acción) -> Objetivo: Organizar/Informar -> Presentación: Línea de tiempo interactiva por pasos (HTML/CSS/JS). -> Interacción: Clic en cada paso para revelar los detalles y KPIs correspondientes. -> Justificación: Es el formato más intuitivo para presentar un proceso secuencial y multifacético como un plan de lanzamiento.
+        - CONFIRMATION: NO SVG graphics used. NO Mermaid JS used. -->
+
+    <style>
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #FDFBF8;
+            color: #334155;
+        }
+        .chart-container {
+            position: relative;
+            width: 100%;
+            height: 400px;
+            max-height: 50vh;
+        }
+        @media (min-width: 768px) {
+            .chart-container {
+                height: 500px;
+            }
+        }
+        .slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #2dd4bf;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+        input[type='range']::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            appearance: none;
+            width: 20px;
+            height: 20px;
+            background: #2dd4bf;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+            margin-top: -8px; 
+        }
+        input[type='range']::-moz-range-thumb {
+            width: 20px;
+            height: 20px;
+            background: #2dd4bf;
+            cursor: pointer;
+            border-radius: 50%;
+            border: 2px solid white;
+            box-shadow: 0 0 5px rgba(0,0,0,0.2);
+        }
+    </style>
+</head>
+<body class="antialiased">
+
+    <header class="bg-white/80 backdrop-blur-lg sticky top-0 z-50 shadow-sm">
+        <nav class="container mx-auto px-6 py-4 flex justify-between items-center">
+            <div class="text-xl font-bold text-slate-700">
+                <span class="text-teal-500">❖</span> Facultad de Ciencias
+            </div>
+            <div class="hidden md:flex space-x-6">
+                <a href="#fase1" class="text-slate-600 hover:text-teal-500 transition-colors">Investigación</a>
+                <a href="#fase2" class="text-slate-600 hover:text-teal-500 transition-colors">Estrategia</a>
+                <a href="#fase3" class="text-slate-600 hover:text-teal-500 transition-colors">Diseño</a>
+                <a href="#fase4" class="text-slate-600 hover:text-teal-500 transition-colors">Lanzamiento</a>
+            </div>
+        </nav>
+    </header>
+
+    <main class="container mx-auto px-6 py-12">
+
+        <section class="text-center mb-20">
+            <h1 class="text-4xl md:text-5xl font-bold text-slate-800 mb-4">Canvas Estratégico Interactivo</h1>
+            <p class="text-lg text-slate-500 max-w-3xl mx-auto">Una herramienta para diseñar una oferta académica de alto impacto que asegure una matrícula exitosa desde el primer año.</p>
+        </section>
+
+        <section id="fase1" class="mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">Fase 1: Pilares de la Investigación de Mercado</h2>
+                <p class="mt-2 text-slate-500">El éxito comienza con una base sólida de evidencia. Explore los cuatro pilares de la investigación haciendo clic en cada tarjeta.</p>
+            </div>
+
+            <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+                <!-- Tarjeta 1: Demanda Estudiantil -->
+                <div class="research-card bg-white p-6 rounded-xl shadow-lg cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2" data-content="content1">
+                    <h3 class="font-bold text-xl mb-3 text-slate-700 flex items-center"><span class="text-2xl mr-3">🎓</span>Demanda Estudiantil</h3>
+                    <p class="text-slate-500 text-sm">Entender qué carreras y temáticas motivan a los futuros universitarios.</p>
+                    <div id="content1" class="hidden mt-4 pt-4 border-t border-slate-200 text-sm space-y-3">
+                        <p><strong>Acciones:</strong> Análisis de datos de postulación, encuestas y focus groups con escolares, monitoreo de tendencias digitales.</p>
+                        <p><strong>Pregunta Clave:</strong> ¿Qué factores (empleabilidad, vocación, prestigio) son decisivos en la elección de una carrera científica?</p>
+                    </div>
+                </div>
+                <!-- Tarjeta 2: Mercado Laboral -->
+                <div class="research-card bg-white p-6 rounded-xl shadow-lg cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2" data-content="content2">
+                    <h3 class="font-bold text-xl mb-3 text-slate-700 flex items-center"><span class="text-2xl mr-3">💼</span>Mercado Laboral</h3>
+                    <p class="text-slate-500 text-sm">Identificar qué profesionales y competencias necesita la industria hoy y en el futuro.</p>
+                    <div id="content2" class="hidden mt-4 pt-4 border-t border-slate-200 text-sm space-y-3">
+                        <p><strong>Acciones:</strong> Análisis de portales de empleo, revisión de informes sectoriales estratégicos, paneles con líderes de la industria.</p>
+                        <p><strong>Pregunta Clave:</strong> ¿Qué tecnologías o roles emergentes (ej. bioinformática, IA) debemos anticipar en nuestras mallas?</p>
+                    </div>
+                </div>
+                <!-- Tarjeta 3: Competencia -->
+                <div class="research-card bg-white p-6 rounded-xl shadow-lg cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2" data-content="content3">
+                    <h3 class="font-bold text-xl mb-3 text-slate-700 flex items-center"><span class="text-2xl mr-3">🔬</span>Análisis de Competencia</h3>
+                    <p class="text-slate-500 text-sm">Mapear la oferta existente para encontrar oportunidades y nichos desatendidos.</p>
+                     <div id="content3" class="hidden mt-4 pt-4 border-t border-slate-200 text-sm space-y-3">
+                        <p><strong>Acciones:</strong> Mapeo de carreras en la región, benchmarking de mallas curriculares, análisis de propuestas de valor de otras universidades.</p>
+                        <p><strong>Pregunta Clave:</strong> ¿Dónde existe un "océano azul"? ¿Qué carrera de vanguardia podríamos ofrecer que nadie más tenga?</p>
+                    </div>
+                </div>
+                <!-- Tarjeta 4: Capacidades Internas -->
+                <div class="research-card bg-white p-6 rounded-xl shadow-lg cursor-pointer transition-all duration-300 hover:shadow-2xl hover:-translate-y-2" data-content="content4">
+                    <h3 class="font-bold text-xl mb-3 text-slate-700 flex items-center"><span class="text-2xl mr-3">🏛️</span>Capacidades Internas</h3>
+                    <p class="text-slate-500 text-sm">Evaluar nuestras fortalezas en cuerpo académico e infraestructura para construir sobre bases sólidas.</p>
+                    <div id="content4" class="hidden mt-4 pt-4 border-t border-slate-200 text-sm space-y-3">
+                        <p><strong>Acciones:</strong> Mapeo de capital humano (PhDs, líneas de investigación), auditoría de infraestructura (laboratorios, equipos), análisis financiero.</p>
+                        <p><strong>Pregunta Clave:</strong> ¿En qué área científica ya poseemos una masa crítica de investigadores que nos permita lanzar una carrera de excelencia?</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="fase2" class="mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">Fase 2: Simulador de Priorización Estratégica</h2>
+                <p class="mt-2 text-slate-500 max-w-3xl mx-auto">No todas las oportunidades son iguales. Ajuste la importancia de cada criterio estratégico y observe cómo impacta en el ranking de carreras potenciales. Esto transforma los datos en una decisión informada.</p>
+            </div>
+            
+            <div class="bg-white p-8 rounded-xl shadow-xl">
+                <div class="grid grid-cols-1 lg:grid-cols-3 gap-8">
+                    <div class="lg:col-span-2">
+                        <div class="chart-container mx-auto max-w-3xl">
+                            <canvas id="prioritizationChart"></canvas>
+                        </div>
+                    </div>
+                    <div class="space-y-6">
+                        <h3 class="font-bold text-lg text-slate-700">Ponderadores Estratégicos</h3>
+                        <div class="slider-control">
+                            <label for="weightA" class="block text-sm font-medium text-slate-600">Demanda Estudiantil (<span id="valueA">30</span>%)</label>
+                            <input type="range" id="weightA" min="0" max="100" value="30" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        </div>
+                        <div class="slider-control">
+                            <label for="weightB" class="block text-sm font-medium text-slate-600">Demanda Laboral Futura (<span id="valueB">30</span>%)</label>
+                            <input type="range" id="weightB" min="0" max="100" value="30" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        </div>
+                        <div class="slider-control">
+                            <label for="weightC" class="block text-sm font-medium text-slate-600">Baja Competencia (<span id="valueC">20</span>%)</label>
+                            <input type="range" id="weightC" min="0" max="100" value="20" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        </div>
+                        <div class="slider-control">
+                            <label for="weightD" class="block text-sm font-medium text-slate-600">Fortaleza Interna (<span id="valueD">15</span>%)</label>
+                            <input type="range" id="weightD" min="0" max="100" value="15" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        </div>
+                         <div class="slider-control">
+                            <label for="weightE" class="block text-sm font-medium text-slate-600">Viabilidad Financiera (<span id="valueE">5</span>%)</label>
+                            <input type="range" id="weightE" min="0" max="100" value="5" class="w-full h-2 bg-slate-200 rounded-lg appearance-none cursor-pointer slider-thumb">
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="fase3" class="mb-24 scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">Fase 3: Arquitectura de la Oferta Académica</h2>
+                <p class="mt-2 text-slate-500">Diseñar un portafolio equilibrado y mallas curriculares con una propuesta de valor única.</p>
+            </div>
+            <div class="grid grid-cols-1 lg:grid-cols-2 gap-8">
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="font-bold text-xl mb-4 text-slate-700">Portafolio de Lanzamiento Equilibrado</h3>
+                    <p class="text-slate-500 mb-6 text-sm">La estrategia es combinar carreras de demanda consolidada que aseguren matrícula (Ancla) con carreras de nicho que construyan prestigio y diferenciación (Innovadoras).</p>
+                    <div class="flex space-x-4">
+                        <div class="flex-1 text-center bg-slate-100 p-4 rounded-lg">
+                            <h4 class="font-semibold text-slate-600">2 Carreras Ancla</h4>
+                            <p class="text-xs text-slate-500 mt-1">Ej: Bioquímica, Geología</p>
+                        </div>
+                        <div class="flex items-center text-2xl text-slate-400">+</div>
+                        <div class="flex-1 text-center bg-teal-50 border border-teal-200 text-teal-800 p-4 rounded-lg">
+                            <h4 class="font-semibold">1-2 Carreras Innovadoras</h4>
+                            <p class="text-xs text-teal-600 mt-1">Ej: Ciencia de Datos para Astro, Biología Sintética</p>
+                        </div>
+                    </div>
+                </div>
+                <div class="bg-white p-8 rounded-xl shadow-lg">
+                    <h3 class="font-bold text-xl mb-4 text-slate-700">Malla Curricular con Sellos de Valor</h3>
+                     <p class="text-slate-500 mb-6 text-sm">Una malla moderna debe ir más allá de los cursos, incorporando hitos que aumenten la empleabilidad y la experiencia del estudiante.</p>
+                    <div class="space-y-3">
+                        <div class="flex items-center bg-slate-50 p-3 rounded-md">
+                            <span class="text-lg mr-3">🔧</span>
+                            <p class="text-sm font-medium text-slate-600">Sello Práctico: Múltiples prácticas (temprana, profesional, de investigación).</p>
+                        </div>
+                         <div class="flex items-center bg-slate-50 p-3 rounded-md">
+                            <span class="text-lg mr-3">🌐</span>
+                            <p class="text-sm font-medium text-slate-600">Sello Global: Cursos en inglés y convenios de intercambio activos.</p>
+                        </div>
+                         <div class="flex items-center bg-slate-50 p-3 rounded-md">
+                            <span class="text-lg mr-3">📜</span>
+                            <p class="text-sm font-medium text-slate-600">Salidas Intermedias: Certificaciones de habilidades (ej. Python para Data Science) al completar hitos.</p>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section id="fase4" class="scroll-mt-20">
+            <div class="text-center mb-12">
+                <h2 class="text-3xl font-bold text-slate-800">Fase 4: Plan de Lanzamiento y Monitoreo</h2>
+                <p class="mt-2 text-slate-500">Una ejecución impecable es clave para el éxito. Navegue por los pasos del plan de acción.</p>
+            </div>
+             <div class="w-full max-w-5xl mx-auto">
+                <div class="flex flex-col md:flex-row justify-between items-center mb-8 relative">
+                    <div class="absolute top-1/2 left-0 w-full h-0.5 bg-slate-300 hidden md:block"></div>
+                    <div class="flex flex-col md:flex-row justify-between w-full">
+                        <div class="timeline-step" data-target="step-content-1">
+                            <div class="timeline-dot w-8 h-8 rounded-full bg-white border-2 border-teal-500 flex items-center justify-center cursor-pointer z-10 transition-all duration-300">1</div>
+                            <p class="text-center text-sm mt-2 font-semibold">Validación</p>
+                        </div>
+                        <div class="timeline-step" data-target="step-content-2">
+                            <div class="timeline-dot w-8 h-8 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center cursor-pointer z-10 transition-all duration-300">2</div>
+                            <p class="text-center text-sm mt-2 text-slate-500">Marketing</p>
+                        </div>
+                        <div class="timeline-step" data-target="step-content-3">
+                            <div class="timeline-dot w-8 h-8 rounded-full bg-white border-2 border-slate-300 flex items-center justify-center cursor-pointer z-10 transition-all duration-300">3</div>
+                            <p class="text-center text-sm mt-2 text-slate-500">Implementación</p>
+                        </div>
+                    </div>
+                </div>
+                <div id="timeline-content" class="bg-white p-8 rounded-xl shadow-lg min-h-[200px]">
+                    <div id="step-content-1" class="timeline-content-pane">
+                        <h4 class="font-bold text-lg text-teal-600 mb-2">Validación con Stakeholders</h4>
+                        <p class="text-slate-600 text-sm">Antes de lanzar, es crucial testear la propuesta con el mundo real. Se presentan las mallas a empleadores y orientadores vocacionales para recibir feedback. Se organizan pilotos como "Carrera por un Día" para medir el interés directo de los escolares. El objetivo es ajustar y refinar la oferta basándose en evidencia y no en supuestos.</p>
+                        <p class="text-sm font-semibold mt-4 text-slate-500">KPI: Nivel de interés (escala 1-10) en encuestas a escolares.</p>
+                    </div>
+                    <div id="step-content-2" class="timeline-content-pane hidden">
+                         <h4 class="font-bold text-lg text-teal-600 mb-2">Plan de Marketing y Lanzamiento</h4>
+                        <p class="text-slate-600 text-sm">Contar nuestra historia de forma efectiva para atraer a los mejores postulantes. Se ejecuta una campaña multicanal que incluye marketing digital dirigido (redes sociales, Google Ads), presencia en ferias vocacionales y una estrategia de relaciones públicas para destacar la innovación de la nueva facultad y su cuerpo docente de excelencia.</p>
+                        <p class="text-sm font-semibold mt-4 text-slate-500">KPI Principal: Número final de matriculados.</p>
+                    </div>
+                    <div id="step-content-3" class="timeline-content-pane hidden">
+                         <h4 class="font-bold text-lg text-teal-600 mb-2">Implementación y Monitoreo</h4>
+                        <p class="text-slate-600 text-sm">Asegurar una ejecución impecable y un ciclo de mejora continua desde el primer día. Se establece un cronograma detallado para hitos críticos como la contratación de directores de carrera y la compra de equipos. Se monitorea de cerca a la primera cohorte con encuestas de satisfacción y seguimiento del rendimiento académico para identificar tempranamente áreas de mejora en la malla o en los servicios al estudiante.</p>
+                        <p class="text-sm font-semibold mt-4 text-slate-500">KPI: Tasa de retención de primer año.</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+    </main>
+    
+    <footer class="bg-slate-800 text-slate-400 mt-20">
+        <div class="container mx-auto px-6 py-8 text-center text-sm">
+            <p>&copy; 2025 Iniciativa de Planificación Estratégica Universitaria. Todos los derechos reservados.</p>
+            <p class="mt-2">Esta aplicación interactiva es una herramienta de visualización basada en el Canvas Estratégico.</p>
+        </div>
+    </footer>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', function () {
+            
+            // FASE 1: Tarjetas de Investigación Interactivas
+            const researchCards = document.querySelectorAll('.research-card');
+            researchCards.forEach(card => {
+                card.addEventListener('click', () => {
+                    const contentId = card.getAttribute('data-content');
+                    const content = document.getElementById(contentId);
+                    
+                    const isVisible = !content.classList.contains('hidden');
+
+                    document.querySelectorAll('.research-card [id^="content"]').forEach(c => c.classList.add('hidden'));
+                    
+                    if (!isVisible) {
+                        content.classList.remove('hidden');
+                    }
+                });
+            });
+
+            // FASE 2: Simulador de Priorización
+            const ctx = document.getElementById('prioritizationChart').getContext('2d');
+            let chart;
+
+            const careerData = {
+                'Ciencia de Datos':    { A: 4, B: 5, C: 4, D: 3, E: 4 },
+                'Geología':            { A: 3, B: 4, C: 3, D: 5, E: 2 },
+                'Bioquímica':          { A: 4, B: 3, C: 2, D: 4, E: 3 },
+                'Biotecnología':       { A: 5, B: 5, C: 3, D: 2, E: 2 },
+                'Ing. en Energías Ren.': { A: 4, B: 5, C: 5, D: 1, E: 1 },
+                'Física Aplicada':     { A: 2, B: 3, C: 5, D: 4, E: 5 },
+                'Genómica':            { A: 3, B: 4, C: 4, D: 1, E: 1 },
+            };
+            
+            const sliders = {
+                A: document.getElementById('weightA'),
+                B: document.getElementById('weightB'),
+                C: document.getElementById('weightC'),
+                D: document.getElementById('weightD'),
+                E: document.getElementById('weightE'),
+            };
+
+            function calculateScores() {
+                const weights = {
+                    A: parseInt(sliders.A.value),
+                    B: parseInt(sliders.B.value),
+                    C: parseInt(sliders.C.value),
+                    D: parseInt(sliders.D.value),
+                    E: parseInt(sliders.E.value),
+                };
+
+                const totalWeight = Object.values(weights).reduce((sum, val) => sum + val, 0);
+                if (totalWeight === 0) return [];
+                
+                const normalizedWeights = {
+                    A: weights.A / totalWeight,
+                    B: weights.B / totalWeight,
+                    C: weights.C / totalWeight,
+                    D: weights.D / totalWeight,
+                    E: weights.E / totalWeight,
+                };
+                
+                return Object.entries(careerData).map(([name, scores]) => {
+                    const score = (scores.A * normalizedWeights.A) + 
+                                  (scores.B * normalizedWeights.B) + 
+                                  (scores.C * normalizedWeights.C) + 
+                                  (scores.D * normalizedWeights.D) +
+                                  (scores.E * normalizedWeights.E);
+                    return { name, score };
+                }).sort((a, b) => b.score - a.score);
+            }
+            
+            function updateChart() {
+                const rankedCareers = calculateScores();
+                const labels = rankedCareers.map(c => c.name);
+                const scores = rankedCareers.map(c => c.score);
+
+                if (chart) {
+                    chart.data.labels = labels;
+                    chart.data.datasets[0].data = scores;
+                    chart.update();
+                } else {
+                    chart = new Chart(ctx, {
+                        type: 'bar',
+                        data: {
+                            labels: labels,
+                            datasets: [{
+                                label: 'Puntaje Estratégico',
+                                data: scores,
+                                backgroundColor: '#2dd4bf',
+                                borderColor: '#0d9488',
+                                borderWidth: 1
+                            }]
+                        },
+                        options: {
+                            indexAxis: 'y',
+                            responsive: true,
+                            maintainAspectRatio: false,
+                            scales: {
+                                x: {
+                                    beginAtZero: true,
+                                    max: 5,
+                                },
+                                y: {
+                                    ticks: {
+                                        font: { size: 12 }
+                                    }
+                                }
+                            },
+                            plugins: {
+                                legend: { display: false },
+                                tooltip: {
+                                    callbacks: {
+                                        label: function(context) {
+                                            return `Puntaje: ${context.raw.toFixed(2)}`;
+                                        }
+                                    }
+                                }
+                            }
+                        }
+                    });
+                }
+            }
+            
+            Object.values(sliders).forEach(slider => {
+                slider.addEventListener('input', (event) => {
+                    const valueSpan = document.getElementById(`value${event.target.id.slice(-1)}`);
+                    valueSpan.textContent = event.target.value;
+                    updateChart();
+                });
+            });
+
+            updateChart();
+
+            // FASE 4: Línea de tiempo
+            const steps = document.querySelectorAll('.timeline-step');
+            steps.forEach((step, index) => {
+                step.addEventListener('click', () => {
+                    document.querySelectorAll('.timeline-content-pane').forEach(pane => pane.classList.add('hidden'));
+                    document.getElementById(step.dataset.target).classList.remove('hidden');
+                    
+                    steps.forEach(s => {
+                        s.querySelector('.timeline-dot').classList.remove('border-teal-500', 'text-teal-500');
+                        s.querySelector('.timeline-dot').classList.add('border-slate-300');
+                        s.querySelector('p').classList.add('text-slate-500');
+                    });
+                    
+                    step.querySelector('.timeline-dot').classList.add('border-teal-500', 'text-teal-500');
+                    step.querySelector('.timeline-dot').classList.remove('border-slate-300');
+                    step.querySelector('p').classList.remove('text-slate-500');
+                });
+            });
+            // Activate first step initially
+            steps[0].querySelector('.timeline-dot').classList.add('border-teal-500', 'text-teal-500');
+            steps[0].querySelector('.timeline-dot').classList.remove('border-slate-300');
+            steps[0].querySelector('p').classList.remove('text-slate-500');
+        });
+    </script>
+</body>
+</html>
